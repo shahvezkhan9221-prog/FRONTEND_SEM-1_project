@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Application</title>
+    
+    <style>
+        :root {
+           
+            --bg-color: rgb(240, 210, 239); 
+            --card-bg: white;             
+            --text-color: #363636;            
+            --primary-color: rgb(197, 158, 233); 
+            --border-color: #eee;         
+            --shadow-color: rgba(0, 0, 0, 0.1);
+
+            --bg-day-img: url('https://images.shiksha.com/mediadata/images/articles/1663312168phpn90Wh7.jpeg');
+            --bg-night-img: url('https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgzt2wpPoqJ2B_0kB4yAEwR2qKbJ132T5adXIPPN-SHRe3vXt1LNn8U-Zi636Ig4rfA00hCYN9ed7E4fp0J_GZMxcgTwYud7s-kQ7B7yHbLeVOzbpElPr6jfeAkzF2uxaHIofwDYFXeP3-oXXwdYBly8TOyb28EmjAG8TzZstGlkeT0eJERVUCkS7iN8Is/s1600/Gemini_Generated_Image_s4b9vos4b9vos4b9%20(1).png');
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--bg-color); 
+            color: var(--text-color);        
+            margin: 0; 
+
+            background-image: var(--bg-day-img);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            transition: background-image 0.5s ease-in-out;
+        }
+
+       
+        body.night-mode {
+            background-image: var(--bg-night-img);
+        }
+
+
+        #theme-toggle-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border: none;
+            padding: 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #theme-toggle-btn:hover {
+            transform: scale(1.1);
+        }
+        .toggle-icon {
+            width: 24px;
+            height: 24px;
+            stroke: var(--primary-color);
+        }
+        .hidden {
+            display: none;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 500px;
+            min-height: 250px;
+            border-radius: 10px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: var(--card-bg); 
+            box-shadow: 0 4px 8px var(--shadow-color);
+            transition: box-shadow 0.3s ease-in-out, transform 0.3s ease-in-out;
+           
+            opacity: 0.98; 
+        }
+
+        .container:hover {
+            box-shadow: 0 8px 16px var(--shadow-color), 0 0 10px rgba(255, 255, 255, 0.2); 
+            transform: translateY(-2px);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+
+        .btn:hover:not(:disabled) {
+            background-color: rgb(170, 130, 210);
+            transform: translateY(-1px); 
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn:active:not(:disabled){
+            transform: translateY(1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .form-check {
+            margin-bottom: 12px;
+            display: flex; 
+            align-items: center; 
+        }
+
+        .radio-input {
+            margin-top: 0; 
+            margin-right: 15px;
+            flex-shrink: 0; 
+        }
+
+        .option-label {
+            display: block;
+            flex-grow: 1; 
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            line-height: 1.4; 
+            border: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+        }
+
+        .option-label:hover {
+            background-color: #f8f0fc; 
+            border-color: var(--primary-color); 
+            transform: scale(1.01);
+        }
+
+        .d-none {
+            display: none !important;
+        }
+
+        @keyframes slideInFromTop {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .question-load-animation {
+            animation: slideInFromTop 0.5s ease-out;
+        }
+
+        #percentage-score {
+            font-weight: bold; 
+            display: inline-block;
+            color: var(--primary-color) !important; 
+            animation: pulse 1.5s infinite; 
+        }
+
+        .form-check:has(.radio-input:checked) .option-label {
+            border-color: var(--primary-color) !important; 
+            background-color: #f8f0fc; 
+            box-shadow: 0 0 5px rgba(197, 158, 233, 0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <button id="theme-toggle-btn" aria-label="Toggle Night Mode">
+        <svg id="sun-icon" class="toggle-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+        <svg id="moon-icon" class="toggle-icon hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+        </svg>
+    </button>
+
+    <div class="container">
+        <div id="quiz-start-page">
+            <h1 style="text-align:center;">INSTRUCTIONS</h1>
+            <ul style="font-size: 18px; padding-left: 20px;">
+                <li>This quiz consists of 15 questions.</li>
+                <li>Read all the questions carefully.</li>
+                <li>All questions are compulsory.</li>
+                <li>Each question carries 1 mark.</li>
+                <li>Your final score will appear at the end.</li>
+            </ul>
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="btn" id="start-btn">Start Test</button>
+            </div>
+        </div>
+
+        <div id="quiz-page" class="d-none">
+            <h2 id="question-counter">Question 1 of 15</h2>
+            <hr>
+            <p id="question-text" style="font-size: 1.1em; font-weight: bold;">Loading...</p>
+            
+            <form id="options-form">
+                <p>Loading Options...</p>
+            </form>
+
+            <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+                <button class="btn" id="prev-btn" disabled>Previous</button>
+                
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn" id="next-btn">Next</button>
+                    <button class="btn d-none" id="submit-btn" style="background-color: rgb(75, 179, 107);">Submit Test</button>
+                </div>
+            </div>
+        </div>
+            <div id="results-page" class="d-none">
+                <h2 style="text-align:center; color: rgb(197, 158, 233);">Quiz Results 🏆</h2>
+                <ul style="list-style: none; padding: 0; font-size: 1.1em;">
+                    <li>Total Questions: <span id="total-questions" style="font-weight: bold;">0</span></li>
+                    <li>Attempted: <span id="attempted-count" style="font-weight: bold;">0</span></li>
+                    <li>Correct Answers: <span id="correct-count" style="font-weight: bold; color: green;">0</span></li>
+                    <li>Incorrect Answers: <span id="incorrect-count" style="font-weight: bold; color: red;">0</span></li>
+                    <li style="margin-top: 15px; font-size: 1.2em; text-align: center;">Final Score: <span id="percentage-score" style="font-weight: bold; color: purple;">0%</span></li>
+                </ul>
+
+                <h3 style="margin-top: 30px; border-bottom: 2px solid #eee; padding-bottom: 5px;">Review Answers</h3>
+                <div id="quiz-review-section" style="margin-top: 20px;">
+                    </div>
+                <div style="text-align: center; margin-top: 30px;">
+                    <button class="btn" id="retake-btn">Retake Test</button>
+                </div>
+            </div>
+    </div>
+
+    <script>
+        const toggleBtn = document.getElementById('theme-toggle-btn');
+        const sunIcon = document.getElementById('sun-icon');
+        const moonIcon = document.getElementById('moon-icon');
+        const body = document.body;
+
+        function updateThemeUI(isNight) {
+            if (isNight) {
+                body.classList.add('night-mode');
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+            } else {
+                body.classList.remove('night-mode');
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+            }
+        }
+
+
+        const savedTheme = localStorage.getItem('quiz-theme');
+        if (savedTheme === 'night') {
+            updateThemeUI(true);
+        }
+
+        toggleBtn.addEventListener('click', () => {
+            const isNight = body.classList.toggle('night-mode');
+            
+            if (isNight) {
+                localStorage.setItem('quiz-theme', 'night');
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+            } else {
+                localStorage.setItem('quiz-theme', 'day');
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+            }
+        });
+    </script>
+
+    <script src="main.js"></script> 
+</body>
+</html>
